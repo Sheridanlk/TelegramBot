@@ -1,12 +1,17 @@
 package main
 
 import (
-	"fmt"
-
+	"TelegramBot/internal/clients/telegram"
 	"TelegramBot/internal/config"
 )
 
+const (
+	tgBotHost = "api.telegram.org"
+)
+
 func main() {
-	cfg := config.MustLoad()
-	fmt.Println(cfg)
+	//load config
+
+	tgClietn := telegram.New(tgBotHost, config.MustLoad().Token)
+
 }
