@@ -53,26 +53,45 @@ func (p *Processor) sendHello(chatID int) error {
 	return p.tg.SendMessage(chatID, msgHello)
 }
 
-func (p *Processor) getPlayers(chatID int) (err error) {
-	defer func() { err = e.Wrap("can't do comand: get players list", err) }()
-	// TODO: implemet function
-	return nil
+func (p *Processor) getSatus(chatID int) (err error) {
+	defer func() { err = e.WrapIfErr("can't do command: get server status", err) }()
+	//TODO: Сделать нормальный пинг, чтобы отличать выключенный сервер от ошики аутентификации
+	if err := p.rcon.Connect(); err != nil {
+		return p.tg.SendMessage(chatID, msgServerOffline)
+	}
+	return p.tg.SendMessage(chatID, msgServerOnline)
 }
 
-func (p *Processor) getSatus(chatID int) (err error) {
-	defer func() { err = e.Wrap("can't do comand: get server status", err) }()
-	// TODO: implemet function
+func (p *Processor) getPlayers(chatID int) (err error) {
+	defer func() { err = e.WrapIfErr("can't do command: get players list", err) }()
+	if err := p.rcon.Connect(); err != nil {
+		return p.tg.SendMessage(chatID, msgFailedToConn)
+	}
+
+	resp, err := p.rcon.Execute("list")
+
+	if err != nil {
+		return err
+	}
+
+	err = p.tg.SendMessage(chatID, resp)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (p *Processor) startTracking(chatID int) (err error) {
-	defer func() { err = e.Wrap("can't do comand: start tracking players", err) }()
+	defer func() { err = e.Wrap("can't do command: start tracking players", err) }()
 	// TODO: implemet function
 	return nil
 }
 
 func (p *Processor) stopTracking(chatID int) (err error) {
-	defer func() { err = e.Wrap("can't do comand: stop tracking players", err) }()
+	defer func() { err = e.Wrap("can't do command: stop tracking players", err) }()
 	// TODO: implemet function
 	return nil
+
 }

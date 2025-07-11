@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"TelegramBot/internal/clients/rconclient"
 	"TelegramBot/internal/clients/tgclient"
 	"TelegramBot/internal/events"
 	"TelegramBot/lib/e"
@@ -9,6 +10,7 @@ import (
 
 type Processor struct {
 	tg     *tgclient.Client
+	rcon   *rconclient.Client
 	offset int
 }
 
@@ -22,9 +24,10 @@ var (
 	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
-func New(client *tgclient.Client) *Processor {
+func New(tgclient *tgclient.Client, rconclient *rconclient.Client) *Processor {
 	return &Processor{
-		tg: client,
+		tg:   tgclient,
+		rcon: rconclient,
 	}
 }
 

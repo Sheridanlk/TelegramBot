@@ -8,7 +8,12 @@ import (
 )
 
 type Config struct {
-	Token string `yaml:"bot_token" env-default:""`
+	Token string `yaml:"bot_token"`
+	RCON  `yaml:"rcon"`
+}
+type RCON struct {
+	Address  string `yaml:"address"`
+	Password string `yaml:"password"`
 }
 
 // Must означает что функция не возвращает ошибку, а паникует

@@ -50,10 +50,10 @@ func (c Consumer) Start() error {
 */
 
 func (c *Consumer) handleEvents(events []events.Event) error {
-	for _, eveent := range events {
-		log.Printf("got new event: %s", eveent.Text)
+	for _, event := range events {
+		log.Printf("got new event: %s", event.Text)
 
-		if err := c.processor.Process(eveent); err != nil {
+		if err := c.processor.Process(event); err != nil {
 			log.Printf("can't hundle event: %s", err.Error())
 
 			continue
