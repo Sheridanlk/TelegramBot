@@ -21,6 +21,10 @@ const (
 	GetSastusCmd = "/status"
 )
 
+const (
+	GetPlayerListRcon = "/lsit"
+)
+
 func (p *Processor) doCmd(text string, chatID int, username string) error {
 	text = strings.TrimSpace(text)
 
@@ -55,7 +59,7 @@ func (p *Processor) sendHello(chatID int) error {
 
 func (p *Processor) getSatus(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: get server status", err) }()
-	//TODO: Сделать нормальный пинг, чтобы отличать выключенный сервер от ошики аутентификации
+	//TODO: Сделать нормальный пинг, чтобы отличать выключенный сервер от ошибки аутентификации
 	if err := p.rcon.Connect(); err != nil {
 		return p.tg.SendMessage(chatID, msgServerOffline)
 	}
@@ -68,7 +72,7 @@ func (p *Processor) getPlayers(chatID int) (err error) {
 		return p.tg.SendMessage(chatID, msgFailedToConn)
 	}
 
-	resp, err := p.rcon.Execute("list")
+	resp, err := p.rcon.Execute(GetPlayerListRcon)
 
 	if err != nil {
 		return err
@@ -84,13 +88,13 @@ func (p *Processor) getPlayers(chatID int) (err error) {
 }
 
 func (p *Processor) startTracking(chatID int) (err error) {
-	defer func() { err = e.Wrap("can't do command: start tracking players", err) }()
+	defer func() { err = e.WrapIfErr("can't do command: start tracking players", err) }()
 	// TODO: implemet function
 	return nil
 }
 
 func (p *Processor) stopTracking(chatID int) (err error) {
-	defer func() { err = e.Wrap("can't do command: stop tracking players", err) }()
+	defer func() { err = e.WrapIfErr("can't do command: stop tracking players", err) }()
 	// TODO: implemet function
 	return nil
 

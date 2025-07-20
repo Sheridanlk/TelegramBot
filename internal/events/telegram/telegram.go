@@ -4,6 +4,7 @@ import (
 	"TelegramBot/internal/clients/rconclient"
 	"TelegramBot/internal/clients/tgclient"
 	"TelegramBot/internal/events"
+	"TelegramBot/internal/storage"
 	"TelegramBot/lib/e"
 	"errors"
 )
@@ -12,6 +13,8 @@ type Processor struct {
 	tg     *tgclient.Client
 	rcon   *rconclient.Client
 	offset int
+
+	storage storage.Storage
 }
 
 type Meta struct {
@@ -24,10 +27,11 @@ var (
 	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
-func New(tgclient *tgclient.Client, rconclient *rconclient.Client) *Processor {
+func New(tgclient *tgclient.Client, rconclient *rconclient.Client, storage storage.Storage) *Processor {
 	return &Processor{
-		tg:   tgclient,
-		rcon: rconclient,
+		tg:      tgclient,
+		rcon:    rconclient,
+		storage: storage,
 	}
 }
 
