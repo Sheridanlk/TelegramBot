@@ -8,8 +8,8 @@ import (
 type Storage interface {
 	Save(ctx context.Context, p *Player) error
 	Update(ctx context.Context, p *Player) error
-	Remove(ctx context.Context, p *Player) error
-	IsExists(ctx context.Context, p *Player) (bool, error)
+	Remove(ctx context.Context, player string) error
+	IsExists(ctx context.Context, player string) (bool, error)
 	GetPlayersLastLogin(ctx context.Context) ([]Player, error)
 }
 

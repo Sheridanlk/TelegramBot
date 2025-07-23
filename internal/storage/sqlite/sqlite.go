@@ -50,21 +50,21 @@ func (s *Storage) Update(ctx context.Context, player *storage.Player) error {
 }
 
 // Remove removes player form storage.
-func (s *Storage) Remove(ctx context.Context, player *storage.Player) error {
+func (s *Storage) Remove(ctx context.Context, player string) error {
 	q := `DELETE FORM players WHERE user_name = ?`
-	if _, err := s.db.ExecContext(ctx, q, player.Name); err != nil {
+	if _, err := s.db.ExecContext(ctx, q, player); err != nil {
 		return e.Wrap("can't remove player", err)
 	}
 	return nil
 }
 
 // IsExists check if player exists in storage.
-func (s *Storage) IsExists(ctx context.Context, player *storage.Player) (bool, error) {
+func (s *Storage) IsExists(ctx context.Context, player string) (bool, error) {
 	q := `SELECT COUNT(*) FROM players WHERE user_name = ?`
 
 	var count int
 
-	if err := s.db.QueryRowContext(ctx, q, player.Name).Scan(&count); err != nil {
+	if err := s.db.QueryRowContext(ctx, q, player).Scan(&count); err != nil {
 		return false, e.Wrap("can't check if pages exist", err)
 	}
 	return count > 0, nil
@@ -86,14 +86,14 @@ func (s *Storage) GetPlayersLastLogin(ctx context.Context) ([]storage.Player, er
 	for rows.Next() {
 		var (
 			name      string
-			lastLogin int64
+			lastLogin time.Time
 		)
 		if err := rows.Scan(&name, &lastLogin); err != nil {
 			return nil, err
 		}
 		players = append(players, storage.Player{
 			Name:      name,
-			LastVisit: time.Unix(lastLogin, 0),
+			LastVisit: lastLogin,
 		})
 	}
 	return players, nil
