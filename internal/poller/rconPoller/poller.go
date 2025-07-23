@@ -7,6 +7,7 @@ import (
 	"TelegramBot/internal/storage"
 	"context"
 	"log"
+	"reflect"
 	"time"
 )
 
@@ -28,7 +29,8 @@ func New(rc *rconclient.Client, storage storage.Storage) *Poller {
 }
 
 func (p *Poller) Start(command string, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+	const probeinterval = 60 * time.Second
+	reqticker := time.NewTicker(interval)
 	online := false
 	log.Printf("poller started")
 	go func() {
@@ -37,46 +39,61 @@ func (p *Poller) Start(command string, interval time.Duration) {
 				select {
 				case <-p.stop:
 					return
-				case <-ticker.C:
+				default:
 					online = probe.IsOnline(p.rc.GetAddres())
+					if !online {
+						time.Sleep(probeinterval)
+						continue
+					}
 				}
-				continue
 			}
 
 			select {
 			case <-p.stop:
 				return
-			case <-ticker.C:
+			case <-reqticker.C:
 				resp, err := p.rc.Execute(command)
 				if err != nil {
 					online = false
 				}
 
+				prevnames := []string{}
 				names, isRightCommand := mcparse.ParsePlayersNames(resp)
+				rewrite := false
+
 				if isRightCommand && names != nil {
-					for _, name := range names {
-						exists, err := p.storage.IsExists(context.Background(), name)
-						if err != nil {
-							log.Print(err)
-							return
-						}
-
-						player := &storage.Player{
-							Name:      name,
-							LastVisit: time.Now().Local(),
-						}
-
-						if exists {
-							err := p.storage.Update(context.Background(), player)
+					if reflect.DeepEqual(prevnames, names) {
+						rewrite = true
+						for _, name := range names {
+							player := &storage.Player{
+								Name:      name,
+								LastVisit: time.Now().Local(),
+							}
+							if rewrite {
+								err := p.storage.Update(context.Background(), player)
+								if err != nil {
+									log.Print(err)
+									return
+								}
+								continue
+							}
+							exists, err := p.storage.IsExists(context.Background(), name)
 							if err != nil {
 								log.Print(err)
 								return
 							}
-						} else {
-							err := p.storage.Save(context.Background(), player)
-							if err != nil {
-								log.Print(err)
-								return
+							if exists {
+								err := p.storage.Update(context.Background(), player)
+								if err != nil {
+									log.Print(err)
+									return
+								}
+							} else {
+								err := p.storage.Save(context.Background(), player)
+								if err != nil {
+									log.Print(err)
+									return
+								}
 							}
 						}
 					}
