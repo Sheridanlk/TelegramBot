@@ -63,3 +63,7 @@ func (c *Client) Close() error {
 	}
 	return nil
 }
+
+func (c *Client) GetAddres() string {
+	return c.adress
+}
