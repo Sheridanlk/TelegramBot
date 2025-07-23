@@ -1,28 +1,27 @@
 package telegram
 
 import (
+	"TelegramBot/internal/probe"
 	"TelegramBot/lib/e"
+	"context"
+	"fmt"
 	"log"
 	"strings"
+	"time"
 )
 
 const (
-	// start: /start + start tracking:
-	StartCmd = "/start"
-	// help:
-	HelpCmd = "/help"
-	// start tracking Players:
-	StartTrackingCmd = "/start_track"
-	// stop tracking Players:
-	StopTrackingCmd = "/stop_track"
-	// get players list:
-	GetPlayersCmd = "/list"
-	// get server status:
-	GetSastusCmd = "/status"
+	StartCmd          = "/start"
+	HelpCmd           = "/help"
+	StartTrackingCmd  = "/start_track"
+	StopTrackingCmd   = "/stop_track"
+	GetPlayersCmd     = "/list"
+	GetSastusCmd      = "/status"
+	GetPalyersStatCmd = "/stat"
 )
 
 const (
-	GetPlayerListRcon = "/lsit"
+	GetPlayerListRcon = "/list"
 )
 
 func (p *Processor) doCmd(text string, chatID int, username string) error {
@@ -43,6 +42,8 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 		return p.startTracking(chatID)
 	case StopTrackingCmd:
 		return p.stopTracking(chatID)
+	case GetPalyersStatCmd:
+		return p.getPlayersStat(chatID)
 	default:
 		return p.tg.SendMessage(chatID, msgUnknownCommand)
 
@@ -59,16 +60,16 @@ func (p *Processor) sendHello(chatID int) error {
 
 func (p *Processor) getSatus(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: get server status", err) }()
-	//TODO: Сделать нормальный пинг, чтобы отличать выключенный сервер от ошибки аутентификации
-	if err := p.rcon.Connect(); err != nil {
-		return p.tg.SendMessage(chatID, msgServerOffline)
+	if probe.IsOnline(p.rcon.GetAddres()) {
+		return p.tg.SendMessage(chatID, msgServerOnline)
 	}
-	return p.tg.SendMessage(chatID, msgServerOnline)
+	return p.tg.SendMessage(chatID, msgServerOffline)
 }
 
 func (p *Processor) getPlayers(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: get players list", err) }()
-	if err := p.rcon.Connect(); err != nil {
+	if !probe.IsOnline(p.rcon.GetAddres()) {
+		p.rcon.Close()
 		return p.tg.SendMessage(chatID, msgFailedToConn)
 	}
 
@@ -89,13 +90,34 @@ func (p *Processor) getPlayers(chatID int) (err error) {
 
 func (p *Processor) startTracking(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: start tracking players", err) }()
-	// TODO: implemet function
-	return nil
+	if p.rconpoller.IsRun() {
+		return p.tg.SendMessage(chatID, msgPollerIsRun)
+	}
+
+	p.rconpoller.Start(GetPlayerListRcon, 30*time.Second)
+	return p.tg.SendMessage(chatID, msgPollerStart)
 }
 
 func (p *Processor) stopTracking(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: stop tracking players", err) }()
-	// TODO: implemet function
-	return nil
+	if p.rconpoller.IsRun() {
+		return p.tg.SendMessage(chatID, msgPollerIsStopped)
+	}
+	p.rconpoller.Stop()
+	return p.tg.SendMessage(chatID, msgPollerStop)
+}
 
+func (p *Processor) getPlayersStat(chatID int) (err error) {
+	defer func() { err = e.WrapIfErr("can't do command: get players status", err) }()
+	players, err := p.storage.GetPlayersLastLogin(context.Background())
+
+	if err != nil {
+		return err
+	}
+
+	var output strings.Builder
+	for _, player := range players {
+		fmt.Fprintf(&output, "%s - %s\n", player.Name, player.LastVisit.Format("02.01.2006 15:04"))
+	}
+	return p.tg.SendMessage(chatID, "Players:\n"+output.String())
 }

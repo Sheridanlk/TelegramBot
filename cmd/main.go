@@ -6,6 +6,7 @@ import (
 	"TelegramBot/internal/config"
 	"TelegramBot/internal/consumer/eventconsumer"
 	"TelegramBot/internal/events/telegram"
+	rconpoller "TelegramBot/internal/poller/rconPoller"
 	"TelegramBot/internal/storage/sqlite"
 	"context"
 	"log"
@@ -29,9 +30,14 @@ func main() {
 		log.Fatal("can't init storage: ", err)
 	}
 
+	telegramClient := tgclient.New(tgBotHost, config.MustLoad().Token)
+	rconClietn := rconclient.New(config.MustLoad().Address, config.MustLoad().Password, 5*time.Second)
+	rconPoller := rconpoller.New(rconClietn, storage)
+
 	eventsProcessor := telegram.New(
-		tgclient.New(tgBotHost, config.MustLoad().Token),
-		rconclient.New(config.MustLoad().Address, config.MustLoad().Password, 5*time.Second),
+		telegramClient,
+		rconClietn,
+		rconPoller,
 		storage,
 	)
 

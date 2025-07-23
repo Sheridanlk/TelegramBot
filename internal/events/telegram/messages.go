@@ -16,4 +16,8 @@ const (
 	msgServerOffline      = "Server offline"
 	msgAuthenticationFail = "Authorization faild Check the address and password and try again."
 	msgExecuteFail        = "Unable to execute command"
+	msgPollerIsRun        = "The poller is already running"
+	msgPollerIsStopped    = "The poller is already stopped"
+	msgPollerStart        = "Poller started"
+	msgPollerStop         = "Poller is stopped"
 )
