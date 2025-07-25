@@ -90,20 +90,19 @@ func (p *Processor) getPlayers(chatID int) (err error) {
 
 func (p *Processor) startTracking(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: start tracking players", err) }()
-	if p.rconpoller.IsRun() {
+	err = p.rconpoller.Start(GetPlayerListRcon, 10*time.Second)
+	if err != nil {
 		return p.tg.SendMessage(chatID, msgPollerIsRun)
 	}
-
-	p.rconpoller.Start(GetPlayerListRcon, 30*time.Second)
 	return p.tg.SendMessage(chatID, msgPollerStart)
 }
 
 func (p *Processor) stopTracking(chatID int) (err error) {
 	defer func() { err = e.WrapIfErr("can't do command: stop tracking players", err) }()
-	if p.rconpoller.IsRun() {
+	err = p.rconpoller.Stop()
+	if err != nil {
 		return p.tg.SendMessage(chatID, msgPollerIsStopped)
 	}
-	p.rconpoller.Stop()
 	return p.tg.SendMessage(chatID, msgPollerStop)
 }
 
