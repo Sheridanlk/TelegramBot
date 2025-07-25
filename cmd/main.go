@@ -11,7 +11,10 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -20,7 +23,9 @@ const (
 )
 
 func main() {
-
+	if err := godotenv.Load(filepath.Join("..", ".env")); err != nil {
+		log.Fatal("No .env file found")
+	}
 	storage, err := sqlite.New(os.Getenv("DATABASE_PATH"))
 	if err != nil {
 		log.Fatal("can't conneсt storage: ", err)
