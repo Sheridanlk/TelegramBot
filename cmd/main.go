@@ -23,9 +23,8 @@ const (
 )
 
 func main() {
-	if err := godotenv.Load(filepath.Join("..", ".env")); err != nil {
-		log.Fatal("No .env file found")
-	}
+	_ = godotenv.Load(filepath.Join("..", ".env"))
+
 	storage, err := sqlite.New(os.Getenv("DATABASE_PATH"))
 	if err != nil {
 		log.Fatal("can't conneсt storage: ", err)
