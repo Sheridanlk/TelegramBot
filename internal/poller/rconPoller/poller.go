@@ -51,7 +51,7 @@ func (p *Poller) Start(command string, interval time.Duration) error {
 func (p *Poller) Stop() error {
 	p.mu.Lock()
 	if !p.run {
-		p.mu.Lock()
+		p.mu.Unlock()
 		return fmt.Errorf("the poller is already stopped")
 	}
 	close(p.stop)
