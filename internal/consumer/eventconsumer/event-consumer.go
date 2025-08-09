@@ -3,6 +3,7 @@ package eventconsumer
 import (
 	"TelegramBot/internal/events"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -49,13 +50,30 @@ func (c Consumer) Start() error {
 паралельная обработка событий(прям надо) поможет WaitGroup
 */
 
-func (c *Consumer) handleEvents(events []events.Event) error {
-	for _, event := range events {
+func (c *Consumer) handleEvents(evenList []events.Event) error {
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(evenList))
+
+	for _, event := range evenList {
 		log.Printf("got new event: %s", event.Text)
+		wg.Add(1)
 
-		if err := c.processor.Process(event); err != nil {
+		go func(e events.Event) {
+			defer wg.Done()
+			if err := c.processor.Process(e); err != nil {
+				errCh <- err
+			}
+		}(event)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
+	for err := range errCh {
+		if err != nil {
 			log.Printf("can't hundle event: %s", err.Error())
-
 			continue
 		}
 	}
